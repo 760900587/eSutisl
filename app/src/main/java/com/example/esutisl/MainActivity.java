@@ -41,7 +41,6 @@ public class MainActivity extends AppCompatActivity {
 //                long failure_number = (long) loagin.get("FAILURE_number");//
                 Log.i("liuhongliang", fist + "");
                 Log.i("liuhongliang次数", timer + "");
-//                Log.i("liuhongliang次数", failure_number + "");
 
                 if (fist == 9) {
                     Intent intent = new Intent(MainActivity.this, Main2Activity.class);

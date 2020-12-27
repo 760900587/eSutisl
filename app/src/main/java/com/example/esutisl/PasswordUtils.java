@@ -124,60 +124,34 @@ public class PasswordUtils {
             bean.setCount(COUNT);
 //            mysql1.insert(bean);
             map.put("FIST", FIIST);
-            map.put(" FAILURE_number", 0L);
+            map.put(" FAILURE_number", 0);
             map.put("TIMER", COUNT);
             return map;
         } else {
             Mysql mysql1 = new Mysql(context);
             Bean bean = mysql1.select();
             int count = bean.getCount();
-//            if (count >= 0) {
-//                bean.setCount(count);
-//                mysql1.UpdataCount(0, count);
-//            }
+            if (count >= 0) {
+                bean.setCount(count);
+                mysql1.UpdataCount(0, count);
+            }
             //第二次登陆
             boolean b1 = Second_landing(level, password, context);
-            SharedPreferences sp = context.getSharedPreferences("data", Context.MODE_APPEND);
-            //输入错误时的时间,如果为空的话就取0L
-            long errorTime = sp.getLong("errorTime", 0L);
-            //获取当前时间
-            long recentTime = System.currentTimeMillis();
-            if (recentTime - errorTime > WAIT_TIME) {
+
                 if (b1) {
                     mysql1.UpdataCount(0, 3);
                     Bean select = mysql1.select();
                     Log.i("liuhongliang", select.toString());
                     map.put("FIST", SUCCESSFULLU);
-                    map.put(" FAILURE_number", 0L);
+                    map.put(" FAILURE_number", 0);
                     map.put("TIMER", 3);
                     return map;
-                } else {
-                    if (count == 1) {
-                        //count值重置
-                        count = LOGIN_CHANCES;
-                        mysql1.UpdataCount(0, count);
-                        //Toast提醒
-                        Toast.makeText(context, "次数" + count + "三次认证失败", Toast.LENGTH_SHORT).show();
-                        //LOGIN_CHANCES次登录失败时，获取此时的Java虚拟机运行时刻并保存提交
-                        errorTime = System.currentTimeMillis();
-                        SharedPreferences sp1 = context.getSharedPreferences("data", Context.MODE_PRIVATE);
-                        SharedPreferences.Editor editor = sp1.edit();
-                        editor.putLong("errorTime", errorTime);
-                        editor.commit();
-                    } else {
-                        count--;
-                        mysql1.UpdataCount(0, count);
-                        Log.i("liuhong", "Loagin: " + count + "剩余次数");
-                    }
+                }else {
                     map.put("FIST", LOGON_FAILED);
                     map.put(" FAILURE_number", WAIT_TIME);
                     map.put("TIMER", bean.getCount());
                     return map;
                 }
-            } else {
-                Toast.makeText(context, "屏幕锁定", Toast.LENGTH_SHORT).show();
-            }
-            return map;
         }
     }
 
