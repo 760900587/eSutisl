@@ -38,7 +38,7 @@ public class MainActivity extends AppCompatActivity {
                 Log.i("liuhongliang map", loagin.toString());
                 int fist = (int) loagin.get("FIST");
                 int timer = (int) loagin.get("TIMER");
-//                long failure_number = (long) loagin.get("FAILURE_number");
+//                long failure_number = (long) loagin.get("FAILURE_number");//
                 Log.i("liuhongliang", fist + "");
                 Log.i("liuhongliang次数", timer + "");
 //                Log.i("liuhongliang次数", failure_number + "");
