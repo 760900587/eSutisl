@@ -33,7 +33,7 @@ public class Main2Activity extends AppCompatActivity {
                 String password = pass.getText().toString();
                 String level = lev.getText().toString();
                 String oldpass = old.getText().toString();
-                Map<String, Object> map = PasswordUtils.set_Password(Integer.parseInt(level), password, oldpass, Main2Activity.this);
+                Map<String, Object> map = PasswordUtils.setPassword(Integer.parseInt(level), password, oldpass, Main2Activity.this);
                 int fist = (int) map.get("FIST");
                 int timer = (int) map.get("TIMER");
                 Log.i("liuhongliang",timer+"失败");

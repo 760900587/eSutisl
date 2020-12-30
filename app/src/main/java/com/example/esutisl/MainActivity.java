@@ -37,11 +37,11 @@ public class MainActivity extends AppCompatActivity {
                 Map<String, Object> loagin = PasswordUtils.Loagin(Integer.parseInt(level), pass, MainActivity.this);
                 Log.i("liuhongliang map", loagin.toString());
                 int fist = (int) loagin.get("FIST");
-                int timer = (int) loagin.get("TIMER");
-//                long failure_number = (long) loagin.get("FAILURE_number");//
-                Log.i("liuhongliang", fist + "");
-                Log.i("liuhongliang次数", timer + "");
-
+//                long timer = (long) loagin.get("TIMER");
+//                int failure_number = (int) loagin.get("FAILURE");//
+//                Log.i("liuhongliang", fist + "");
+//                Log.i("liuhongliang次数", timer + "");
+//                Log.i("liuhongliang 时间", failure_number + "");
                 if (fist == 9) {
                     Intent intent = new Intent(MainActivity.this, Main2Activity.class);
                     startActivity(intent);
