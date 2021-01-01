@@ -162,10 +162,7 @@ public class PasswordUtils {
             //首次登陆
             Bean bean = new Bean();
             bean.setCount(COUNT);
-            map.put("FIST", FIIST);
-            map.put("FAILURE", 0);//failure 失败次数
-            map.put("TIMER", 0L);//timer 时间
-            return map;
+            return getStringObjectMap(FIIST,bean, 0L);
         } else {
             Bean bean = MyApp.mysql.select();
             int count = bean.getCount();
@@ -174,64 +171,67 @@ public class PasswordUtils {
             Log.i("liuhongliang", "Loagin: 点击登录获取当前时间" + l);
             long errorTime = sp.getLong("errorTime", 0L);//三次登录失败后记录的时间
 
-            if (l - errorTime > TIME) {//判断当前是否是锁定状态
-                //已过锁定时间//判断登录是否成功
-                if (Second_landing(level, password, context)){
-                    //成功
-                    bean.setCount(COUNT);
-                    map.put("FIST", FIIST);
-                    map.put("FAILURE", 0);//failure 失败次数
-                    map.put("TIMER", 0L);//timer 时间
-                    return map;
-                }else {
-                    //失败
-                    // fist = 表示登录第几次失败
-                    if (fist == 1) {
-                        //第三次失败
-                        //count值重置
-                        fist = LOGIN_CHANCES;
-                        //Toast提醒
-                        Log.i("liuhongliang", "Loagin: 三次登录失败 ");
-                        //第三次登录失败时，获取此时的时间并保存提交
-                        long errorTime1 = SystemClock.elapsedRealtime();
-                        Log.i("liuhongliang", "Loagin: 系统时间" + errorTime1);
-                        SharedPreferences.Editor editor = sp.edit();
-                        editor.putLong("errorTime", errorTime1);
-                        int errorNumber = sp.getInt("errorNumber", 1);
-                        errorNumber*=2;
-                        editor.putInt("errorNumber",errorNumber);
-                        editor.apply();
-                        TIME = 3000L*errorNumber;
-                        //TIMER 返回锁定时长
-                        map.put("FIST", LOGON_FAILED);
-                        map.put("FAILURE",bean.getCount());
-                        map.put("TIMER", TimeUtils.formatTime(TIME));
-                        return map;
-                    } else {
-                        fist--;
-                        if (count >= 0) {
-                            count--;
-                        }
-                        MyApp.mysql.UpdataCount(0, count);
-                    }
-                    Bean select = MyApp.mysql.select();
-                    map.put("FIST", LOGON_FAILED);
-                    map.put("FAILURE", select.getCount());
-                    map.put("TIMER", 0);
-                    return map;
-                }
-            } else {//是锁定
-                //当前点击登录获取时间 - 三次登录失败记录的时间 = 锁定时长
-                long time = l - errorTime;
-                //规定的锁定时间 - 锁定时长 = 剩余时间
-                long a = TIME - time;
-                map.put("FIST", LOGON_FAILED);
-                map.put("FAILURE", bean.getCount());
-                map.put("TIMER", TimeUtils.formatTime(a));
-                return map;
-            }
+            return lockedOrNot(level, password, context, sp, bean, count, l, errorTime);
 
         }
+    }
+
+    private static Map<String, Object> lockedOrNot(int level, String password, Context context, SharedPreferences sp, Bean bean, int count, long l, long errorTime) {
+        if (l - errorTime > TIME) {//判断当前是否是锁定状态
+            //已过锁定时间//判断登录是否成功
+            if (Second_landing(level, password, context)){
+                //成功
+                bean.setCount(COUNT);
+                return getStringObjectMap(SUCCESSFULLU,bean, 0L);
+            }else {
+                //失败
+                // fist = 表示登录第几次失败
+                if (fist == 1) {
+                    //第三次失败
+                    thirdFailure(sp);
+                    return getStringObjectMap(LOGON_FAILED,bean, TIME);
+                } else {
+                    fist--;
+                    if (count >= 0) {
+                        count--;
+                    }
+                    MyApp.mysql.UpdataCount(0, count);
+                }
+                Bean select = MyApp.mysql.select();
+                return getStringObjectMap(LOGON_FAILED,select, 0L);
+            }
+        } else {//是锁定
+            //当前点击登录获取时间 - 三次登录失败记录的时间 = 锁定时长
+            long time = l - errorTime;
+            //规定的锁定时间 - 锁定时长 = 剩余时间
+            long a = TIME - time;
+            return getStringObjectMap(LOGON_FAILED,bean, a);
+        }
+    }
+
+    private static void thirdFailure(SharedPreferences sp) {
+        //count值重置
+        fist = LOGIN_CHANCES;
+        //Toast提醒
+        Log.i("liuhongliang", "Loagin: 三次登录失败 ");
+        //第三次登录失败时，获取此时的时间并保存提交
+        long errorTime1 = SystemClock.elapsedRealtime();
+        Log.i("liuhongliang", "Loagin: 系统时间" + errorTime1);
+        SharedPreferences.Editor editor = sp.edit();
+        editor.putLong("errorTime", errorTime1);
+        int errorNumber = sp.getInt("errorNumber", 1);
+        TIME = 3000L*errorNumber;
+        errorNumber*=2;
+        editor.putInt("errorNumber",errorNumber);
+        editor.apply();
+    }
+
+    private static Map<String, Object> getStringObjectMap(int type,Bean bean, long errorTime) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("FIST", type);
+        map.put("FAILURE", bean.getCount());
+        map.put("TIMER", TimeUtils.formatTime(errorTime));
+        return map;
     }
 
     public static boolean Second_landing(int level, String password, Context context) {
