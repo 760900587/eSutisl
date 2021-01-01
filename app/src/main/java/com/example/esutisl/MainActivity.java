@@ -2,7 +2,10 @@ package com.example.esutisl;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -19,6 +22,7 @@ public class MainActivity extends AppCompatActivity {
     private EditText lev;
     private Button buton;
     private Button up;
+    private Button clear;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,13 +39,8 @@ public class MainActivity extends AppCompatActivity {
                 String pass = password.getText().toString();
                 String level = lev.getText().toString();
                 Map<String, Object> loagin = PasswordUtils.Loagin(Integer.parseInt(level), pass, MainActivity.this);
-                Log.i("liuhongliang map", loagin.toString());
+                Log.i("liuhongliang", loagin.toString());
                 int fist = (int) loagin.get("FIST");
-//                long timer = (long) loagin.get("TIMER");
-//                int failure_number = (int) loagin.get("FAILURE");//
-//                Log.i("liuhongliang", fist + "");
-//                Log.i("liuhongliang次数", timer + "");
-//                Log.i("liuhongliang 时间", failure_number + "");
                 if (fist == 9) {
                     Intent intent = new Intent(MainActivity.this, Main2Activity.class);
                     startActivity(intent);
@@ -63,6 +62,15 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+        clear.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                MyApp.mysql.delete();
+                @SuppressLint("WrongConstant") SharedPreferences sp = MainActivity.this.getSharedPreferences("data", MODE_APPEND);
+                sp.edit().clear().apply();
+                PasswordUtils.fist = PasswordUtils.LOGIN_CHANCES;
+            }
+        });
     }
 
     private void initView() {
@@ -70,6 +78,7 @@ public class MainActivity extends AppCompatActivity {
         lev = findViewById(R.id.level);
         buton = findViewById(R.id.button);
         up = findViewById(R.id.up);
+        clear = findViewById(R.id.clear);
 
     }
 }

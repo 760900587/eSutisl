@@ -24,13 +24,14 @@ public class PasswordUtils {
     private static int COUNT = 3;
     private static int SETCOUNT = 3;
     //3次登录机会
-    private static int LOGIN_CHANCES = 3;
+    public static int LOGIN_CHANCES = 3;
     //还剩几次登录机会的标志，初始值就是LOGIN_CHANCES
     //多次认证失败时需要等待的时间
-    private static int fist = LOGIN_CHANCES;
+    public static int fist = LOGIN_CHANCES;
     //修改次数
     private static int modifyFist = LOGIN_CHANCES;
     private static float WAIT_TIME = 30000L;
+    private static long TIME = 0L;
 
     /*
     /设置密码接口
@@ -39,15 +40,14 @@ public class PasswordUtils {
     public static Map<String, Object> setPassword(int level, String pNewPassword, String oldPassword, Context context) {
         Map<String, Object> map = new HashMap<>();
         //创建数据库实例
-        Mysql mysql = new Mysql(context);
         // 调用查询方法 如果i retrun 0 ，表示没有数据 表示首次登录
-        int i = mysql.selectQuery();
+        int i = MyApp.mysql.selectQuery();
         if (i == 0) {
             //首次设置密码
             boolean is_setPassword = First_password(level, context, pNewPassword);
             if (is_setPassword) {
                 map.put("FIST", FIIST);
-                map.put(" FAILURE_number", 0L);
+                map.put("FAILURE_number", 0L);
                 map.put("TIMER", SETCOUNT);
                 return map;
             }
@@ -59,15 +59,14 @@ public class PasswordUtils {
             SharedPreferences sp = context.getSharedPreferences("data", Context.MODE_APPEND);
             long modifyErrorTime = sp.getLong("modifyErrorTime", 0L);
             int modifyErrorNumber = sp.getInt("modifyErrorNumber", 0);
-            long TIME=300000*modifyErrorNumber;
-            Mysql mysql1 = new Mysql(context);
-            Bean select = mysql1.select();
+            long TIME=30000*modifyErrorNumber;
+            Bean select = MyApp.mysql.select();
             int count = select.getCount();
             if(l-modifyErrorTime>TIME){
                 // 第二次修改密码需要校验旧密码
                 boolean b = SecondPassword(level, pNewPassword, oldPassword, context);
                 if (b) {
-                    mysql1.UpdataCount(0, 3);
+                    MyApp.mysql.UpdataCount(0, 3);
                     map.put("FIST", SUCCESSFULLU);
                     map.put(" FAILURE_number", 0L);
                     map.put("TIMER", SETCOUNT);
@@ -96,7 +95,7 @@ public class PasswordUtils {
                         if (count >= 0) {
                             count--;
                         }
-                        mysql.UpdataCount(0, count);
+                        MyApp.mysql.UpdataCount(0, count);
                     }
                     map.put("FIST", LOGON_FAILED);
                     map.put("FAILURE", select.getCount());
@@ -117,8 +116,7 @@ public class PasswordUtils {
 
     // 校验旧密码
     private static boolean SecondPassword(int level, String pNewPassword, String oldPassword, Context context) {
-        Mysql mysql = new Mysql(context);
-        Bean select = mysql.select();//查询
+        Bean select = MyApp.mysql.select();//查询
         //校验密码 解密旧密码
 //        String s = AESUtils.decryptPassword(select.getPassword());
 //        Log.i("liu", s);
@@ -128,7 +126,7 @@ public class PasswordUtils {
 //            String password = AESUtils.encryptPassword(pNewPassword);
 //            Log.i("liuhong", password);
             //修改根据id修改密码
-            mysql.Updata(0, pNewPassword);
+            MyApp.mysql.Updata(0, pNewPassword);
             return true;
         } else {
             return false;
@@ -137,13 +135,12 @@ public class PasswordUtils {
 
     // 首次设置密码
     private static boolean First_password(int level, Context context, String password) {
-        Mysql mysql = new Mysql(context);
         Bean bean = new Bean();
         //加密
         if (level == 0) {
             bean.setPassword(password);
             bean.setCount(COUNT);
-            mysql.insert(bean);
+            MyApp.mysql.insert(bean);
             return true;
         } else {
             return false;
@@ -156,83 +153,77 @@ public class PasswordUtils {
     public static Map<String, Object> Loagin(int level, String password, Context context) {
         Map<String, Object> map = new HashMap<>();
         //p判断是否第一次登陆
-        Mysql mysql = new Mysql(context);
-        int i = mysql.selectQuery();
+        int i = MyApp.mysql.selectQuery();
         boolean b = First_Loage(level);//首次登陆
+
+        @SuppressLint("WrongConstant")
+        SharedPreferences sp = context.getSharedPreferences("data", Context.MODE_APPEND);
         if (i == 0 && b) {
             //首次登陆
-            Mysql mysql1 = new Mysql(context);
             Bean bean = new Bean();
             bean.setCount(COUNT);
             map.put("FIST", FIIST);
-            map.put("FAILURE", 0);
-            map.put("TIMER", 0L);
+            map.put("FAILURE", 0);//failure 失败次数
+            map.put("TIMER", 0L);//timer 时间
             return map;
         } else {
-            Mysql mysql1 = new Mysql(context);
-            Bean bean = mysql1.select();
+            Bean bean = MyApp.mysql.select();
             int count = bean.getCount();
-            /*
-               b1 = true 登录成功
-               b1 =false "登录失败" 失败三次需要倒计时
-
-             */
-            @SuppressLint("WrongConstant")
-            SharedPreferences sp = context.getSharedPreferences("data", Context.MODE_APPEND);
-            int errorNumber = sp.getInt("errorNumber", 1);
-            long TIME = 300000L*errorNumber;
-            boolean b1 = Second_landing(level, password, context);
-            //获取开机时间
+            //点击登录获取当前时间
             long l = SystemClock.elapsedRealtime();
-            Log.i("liuhongliang", "Loagin: 开机时间" + l);
-            long errorTime = sp.getLong("errorTime", 0L);
-            if (l - errorTime > TIME) {
-                if (b1) {
-                    mysql1.UpdataCount(0, 3);
-                    Bean select = mysql1.select();
-                    Log.i("liuhongliang", select.toString());
-                    map.put("FIST", SUCCESSFULLU);
-                    map.put(" FAILURE_number", 0);
-                    map.put("TIMER", 3);
+            Log.i("liuhongliang", "Loagin: 点击登录获取当前时间" + l);
+            long errorTime = sp.getLong("errorTime", 0L);//三次登录失败后记录的时间
+
+            if (l - errorTime > TIME) {//判断当前是否是锁定状态
+                //已过锁定时间//判断登录是否成功
+                if (Second_landing(level, password, context)){
+                    //成功
+                    bean.setCount(COUNT);
+                    map.put("FIST", FIIST);
+                    map.put("FAILURE", 0);//failure 失败次数
+                    map.put("TIMER", 0L);//timer 时间
                     return map;
-                } else {
-                    // 登录三次失败运行
-                    // 锁定五分钟
-                    // fist = 表示地登录第三次
+                }else {
+                    //失败
+                    // fist = 表示登录第几次失败
                     if (fist == 1) {
+                        //第三次失败
                         //count值重置
                         fist = LOGIN_CHANCES;
                         //Toast提醒
                         Log.i("liuhongliang", "Loagin: 三次登录失败 ");
-                        //LOGIN_CHANCES次登录失败时，获取此时的Java虚拟机运行时刻并保存提交
-                        errorTime = SystemClock.elapsedRealtime();
-                        Log.i("liuhongliang", "Loagin: 系统时间" + errorTime);
+                        //第三次登录失败时，获取此时的时间并保存提交
+                        long errorTime1 = SystemClock.elapsedRealtime();
+                        Log.i("liuhongliang", "Loagin: 系统时间" + errorTime1);
                         SharedPreferences.Editor editor = sp.edit();
-                        editor.putLong("errorTime", errorTime);
-                        editor.putInt("errorNumber",sp.getInt("errorNumber",0)+1);
-                        editor.commit();
-                        int errorNumber1 = sp.getInt("errorNumber", 0);
+                        editor.putLong("errorTime", errorTime1);
+                        int errorNumber = sp.getInt("errorNumber", 1);
+                        errorNumber*=2;
+                        editor.putInt("errorNumber",errorNumber);
+                        editor.apply();
+                        TIME = 3000L*errorNumber;
                         //TIMER 返回锁定时长
                         map.put("FIST", LOGON_FAILED);
                         map.put("FAILURE",bean.getCount());
-                        map.put("TIMER", TimeUtils.formatTime(300000L*errorNumber1));
+                        map.put("TIMER", TimeUtils.formatTime(TIME));
                         return map;
                     } else {
                         fist--;
                         if (count >= 0) {
                             count--;
                         }
-                        mysql.UpdataCount(0, count);
+                        MyApp.mysql.UpdataCount(0, count);
                     }
-                    Bean select = mysql.select();
+                    Bean select = MyApp.mysql.select();
                     map.put("FIST", LOGON_FAILED);
                     map.put("FAILURE", select.getCount());
                     map.put("TIMER", 0);
                     return map;
                 }
-            } else {
-                //返回锁定剩余时间
+            } else {//是锁定
+                //当前点击登录获取时间 - 三次登录失败记录的时间 = 锁定时长
                 long time = l - errorTime;
+                //规定的锁定时间 - 锁定时长 = 剩余时间
                 long a = TIME - time;
                 map.put("FIST", LOGON_FAILED);
                 map.put("FAILURE", bean.getCount());
@@ -244,8 +235,7 @@ public class PasswordUtils {
     }
 
     public static boolean Second_landing(int level, String password, Context context) {
-        Mysql mysql = new Mysql(context);
-        Bean select = mysql.select();
+        Bean select = MyApp.mysql.select();
         if (select.getPassword().equals(password) && level == 0) {
             return true;
         } else {

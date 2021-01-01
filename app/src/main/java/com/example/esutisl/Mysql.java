@@ -107,4 +107,8 @@ public class Mysql extends SQLiteOpenHelper {
         int i = db.update("person", values, "id=?", new String[]{id + ""});
         return i;
     }
+
+    public void delete(){
+        getWritableDatabase().execSQL("delete from person");
+    }
 }
