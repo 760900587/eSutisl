@@ -196,6 +196,9 @@ public class PasswordUtils {
                     map.put("TIMER", 3);
                     return map;
                 } else {
+                    // 登录三次失败运行
+                    // 锁定五分钟
+                    // fist = 表示地登录第三次
                     if (fist == 1) {
                         //count值重置
                         fist = LOGIN_CHANCES;
@@ -209,6 +212,7 @@ public class PasswordUtils {
                         editor.putInt("errorNumber",sp.getInt("errorNumber",0)+1);
                         editor.commit();
                         int errorNumber1 = sp.getInt("errorNumber", 0);
+                        //TIMER 返回锁定时长
                         map.put("FIST", LOGON_FAILED);
                         map.put("FAILURE",bean.getCount());
                         map.put("TIMER", TimeUtils.formatTime(300000L*errorNumber1));
@@ -227,6 +231,7 @@ public class PasswordUtils {
                     return map;
                 }
             } else {
+                //返回锁定剩余时间
                 long time = l - errorTime;
                 long a = TIME - time;
                 map.put("FIST", LOGON_FAILED);
